@@ -3,7 +3,14 @@
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('canvas'))
 const ctx = canvas.getContext('2d')
 
-canvas.style.backgroundColor = 'lightgrey'
+setFloorColour = function() {
+    canvas.style.backgroundColor = document.getElementById('floorColour').value
+}
+
+setWallColour = function() {
+    let colour = document.getElementById('wallColour').value
+    grid.renderWalls(colour)
+}
 
 // GRID
 
@@ -29,17 +36,10 @@ grid.generateNoise = function() {
     }
 }
 
-/* grid.addBorder = function() {
-    grid.findEdges()
-    grid.cells.forEach((value, index) => {
-        if (grid.cells[index].edges.length > 0) { grid.cells[index].isWall = true }
-    })
-} */
-
-grid.render = function() {
+grid.renderWalls = function(wallColour) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = 'black'
-    grid.cells.forEach((value, index) => {
+    ctx.fillStyle = wallColour
+    grid.cells.forEach((_, index) => {
         //console.log(this.cells[index])
         if (this.cells[index].isWall) {
             ctx.fillRect(this.cells[index].x, this.cells[index].y, grid.cellSize, grid.cellSize)
@@ -48,7 +48,7 @@ grid.render = function() {
 }
 
 grid.findEdges = function() {
-    grid.cells.forEach((value, index) => {
+    grid.cells.forEach((_, index) => {
         if (index < grid.dimension) {
             grid.cells[index].edges.push('top');
         }
@@ -141,7 +141,7 @@ grid.findNeighbours = function(cell) {
 
 grid.generateNextCells = function() {
     grid.previousCells = grid.cells
-    this.cells = this.previousCells.map((value, index) => {
+    this.cells = this.previousCells.map((_, index) => {
         let i = this.cells[index]
         if (i.neighbouringWalls >= 4 && i.neighbouringWalls <= 8) {
             i.isWall = true
@@ -153,24 +153,26 @@ grid.generateNextCells = function() {
     }, grid)
 }
 
-const execute = function(generations, refreshRate) {
+const generateCavern = function(generations, refreshRate) {
     grid.generateNoise()
-        //grid.addBorder()
-    grid.render()
+    grid.renderWalls()
     grid.findEdges()
     let timer = setInterval(() => {
-        grid.cells.forEach((value, j) => {
+        grid.cells.forEach((_, j) => {
             grid.findNeighbours(j)
         })
         grid.generateNextCells()
-        grid.render()
+        grid.renderWalls()
     }, refreshRate)
     setTimeout(() => { clearInterval(timer) }, generations * refreshRate)
 }
 
 // EXECUTE
-execute(5, 80)
+setFloorColour()
+setWallColour()
+generateCavern(5, 80)
 
 
 // TO DO
-// refactor to include a checkIfWall function
+// refactor Regenerate button so it don't refresh the page
+// ? refactor to include a checkIfWall function
