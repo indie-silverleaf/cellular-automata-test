@@ -10,14 +10,14 @@
     <h1>Random Cavern Generator</h1>
     <p><em>(a study of cellular automata)</em></p>
     <br>
-    <!-- <button style="background-color: lightcyan; font-weight: bold; font-size: medium; width: 125px; height: 30px;"></button> -->
     <label for="wallColour">Wall Colour:</label>
     <input type="color" id="wallColour" value="#444444" onchange="setWallColour()">
     <label for="floorColour">Floor Colour:</label>
     <input type="color" id="floorColour" value="#d3d3d3" onchange="setFloorColour()">
     <br>
     <canvas id="canvas" width="400" height="400" style="margin-top: 10px;"></canvas>
-    <button onclick="window.location.reload()" style="background-color: lightpink; font-size: medium; width: 400px; height: 30px;">Regenerate</button>
+    <br>
+    <button onclick="generateCavern()" style="background-color: lightcyan; font-size: medium; width: 200px; height: 30px;">Generate New</button>
     <script src="./ca.js" async defer></script>
 </body>
 

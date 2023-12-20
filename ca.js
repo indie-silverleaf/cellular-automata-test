@@ -3,11 +3,15 @@
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('canvas'))
 const ctx = canvas.getContext('2d')
 
-setFloorColour = function() {
+const clearCanvas = function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+}
+
+const setFloorColour = function() {
     canvas.style.backgroundColor = document.getElementById('floorColour').value
 }
 
-setWallColour = function() {
+const setWallColour = function() {
     let colour = document.getElementById('wallColour').value
     grid.renderWalls(colour)
 }
@@ -20,9 +24,16 @@ const grid = {
     cells: []
 }
 
+grid.clearAllCells = function() {
+    grid.previousCells = []
+    grid.cells = []
+}
+
 grid.cellSize = (canvas.width / grid.dimension)
 
 grid.generateNoise = function() {
+    grid.clearAllCells()
+    clearCanvas()
     for (j = 0; j < grid.dimension; j++) {
         for (i = 0; i < grid.dimension; i++) {
             grid.cells.push({
@@ -37,11 +48,10 @@ grid.generateNoise = function() {
 }
 
 grid.renderWalls = function(wallColour) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = wallColour
     grid.cells.forEach((_, index) => {
-        //console.log(this.cells[index])
         if (this.cells[index].isWall) {
+            console.log('rendering cell' + index)
             ctx.fillRect(this.cells[index].x, this.cells[index].y, grid.cellSize, grid.cellSize)
         }
     }, grid)
@@ -153,10 +163,13 @@ grid.generateNextCells = function() {
     }, grid)
 }
 
-const generateCavern = function(generations, refreshRate) {
+const refreshRate = 80
+const generations = 5
+
+const generateCavern = function() {
     grid.generateNoise()
-    grid.renderWalls()
     grid.findEdges()
+    grid.renderWalls()
     let timer = setInterval(() => {
         grid.cells.forEach((_, j) => {
             grid.findNeighbours(j)
@@ -170,7 +183,7 @@ const generateCavern = function(generations, refreshRate) {
 // EXECUTE
 setFloorColour()
 setWallColour()
-generateCavern(5, 80)
+generateCavern()
 
 
 // TO DO
