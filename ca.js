@@ -1,5 +1,17 @@
-// CANVAS 
+// RENDERING
+const refreshRate = 80
+const generations = 5
 
+const renderWalls = function(wallColour) {
+    ctx.fillStyle = wallColour
+    grid.cells.forEach((_, index) => {
+        if (grid.cells[index].isWall) {
+            ctx.fillRect(grid.cells[index].x, grid.cells[index].y, grid.cellSize, grid.cellSize)
+        }
+    })
+}
+
+// CANVAS 
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('canvas'))
 const ctx = canvas.getContext('2d')
 
@@ -13,48 +25,38 @@ const setFloorColour = function() {
 
 const setWallColour = function() {
     let colour = document.getElementById('wallColour').value
-    grid.renderWalls(colour)
+    renderWalls(colour)
 }
 
 // GRID
-
 const grid = {
-    dimension: 100,
+    dimension: 60,
     previousCells: [],
-    cells: []
-}
-
-grid.clearAllCells = function() {
-    grid.previousCells = []
-    grid.cells = []
+    cells: [],
+    wallCount: 0
 }
 
 grid.cellSize = (canvas.width / grid.dimension)
 
+grid.clearAllCells = function() {
+    grid.cells = []
+}
+
 grid.generateNoise = function() {
     grid.clearAllCells()
-    clearCanvas()
     for (j = 0; j < grid.dimension; j++) {
         for (i = 0; i < grid.dimension; i++) {
             grid.cells.push({
-                x: Math.ceil(i * grid.cellSize),
-                y: Math.ceil(j * grid.cellSize),
+                x: (i * grid.cellSize),
+                y: (j * grid.cellSize),
                 isWall: Math.random() <= 0.4,
                 edges: [],
                 neighbouringWalls: 0
             })
         }
     }
-}
-
-grid.renderWalls = function(wallColour) {
-    ctx.fillStyle = wallColour
-    grid.cells.forEach((_, index) => {
-        if (this.cells[index].isWall) {
-            console.log('rendering cell' + index)
-            ctx.fillRect(this.cells[index].x, this.cells[index].y, grid.cellSize, grid.cellSize)
-        }
-    }, grid)
+    grid.findEdges()
+    grid.findNeighbours()
 }
 
 grid.findEdges = function() {
@@ -74,118 +76,114 @@ grid.findEdges = function() {
     })
 }
 
-grid.findNeighbours = function(cell) {
-    //let neighbouringWalls = 0
+grid.findNeighbours = function() {
 
-    // account for out-of-grid neighbours (i.e. implied walls beyond corners and edges)
-    if (grid.cells[cell].edges.length == 2) {
-        grid.cells[cell].neighbouringWalls += 5
-    } else if (grid.cells[cell].edges.length == 1) {
-        grid.cells[cell].neighbouringWalls += 3
-    }
+    grid.cells.forEach((_, i) => {
 
-    // account for in-grid neighbours
+        // account for out-of-grid neighbours (i.e. implied walls beyond corners and edges)
+        if (grid.cells[i].edges.length == 2) {
+            grid.cells[i].neighbouringWalls += 5
+        } else if (grid.cells[i].edges.length == 1) {
+            grid.cells[i].neighbouringWalls += 3
+        }
 
-    //check above (if not on top edge)
-    if (!grid.cells[cell].edges.includes("top")) {
+        // account for in-grid neighbours
 
-        //above-left
-        if (!grid.cells[cell].edges.includes("left")) {
-            if (grid.cells[cell - grid.dimension - 1].isWall) {
-                grid.cells[cell].neighbouringWalls++;
+        //check above (if not on top edge)
+        if (!grid.cells[i].edges.includes("top")) {
+
+            //above-left
+            if (!grid.cells[i].edges.includes("left")) {
+                if (grid.cells[i - grid.dimension - 1].isWall) {
+                    grid.cells[i].neighbouringWalls++;
+                }
+            }
+
+            //directly above
+            if (grid.cells[i - grid.dimension].isWall) {
+                grid.cells[i].neighbouringWalls++
+            }
+
+            //above-right
+            if (!grid.cells[i].edges.includes("right")) {
+                if (grid.cells[i - grid.dimension + 1].isWall) {
+                    grid.cells[i].neighbouringWalls++
+                }
             }
         }
 
-        //directly above
-        if (grid.cells[cell - grid.dimension].isWall) {
-            grid.cells[cell].neighbouringWalls++
-        }
-
-        //above-right
-        if (!grid.cells[cell].edges.includes("right")) {
-            if (grid.cells[cell - grid.dimension + 1].isWall) {
-                grid.cells[cell].neighbouringWalls++
-            }
-        }
-    }
-
-    //check left (if not on left edge)
-    if (!grid.cells[cell].edges.includes("left")) {
-        if (grid.cells[cell - 1].isWall) {
-            grid.cells[cell].neighbouringWalls++
-        }
-    }
-
-    //check right (if not on right edge)
-    if (!grid.cells[cell].edges.includes("right")) {
-        if (grid.cells[cell + 1].isWall) {
-            grid.cells[cell].neighbouringWalls++
-        }
-    }
-
-    //check below (if not on bottom edge)
-    if (!grid.cells[cell].edges.includes("bottom")) {
-
-        //below-left
-        if (!grid.cells[cell].edges.includes("left")) {
-            if (grid.cells[cell + grid.dimension - 1].isWall) {
-                grid.cells[cell].neighbouringWalls++
+        //check left (if not on left edge)
+        if (!grid.cells[i].edges.includes("left")) {
+            if (grid.cells[i - 1].isWall) {
+                grid.cells[i].neighbouringWalls++
             }
         }
 
-        //directly below
-        if (grid.cells[cell + grid.dimension].isWall) {
-            grid.cells[cell].neighbouringWalls++
-        }
-
-        //below-right
-        if (!grid.cells[cell].edges.includes("right")) {
-            if (grid.cells[cell + grid.dimension + 1].isWall) {
-                grid.cells[cell].neighbouringWalls++
+        //check right (if not on right edge)
+        if (!grid.cells[i].edges.includes("right")) {
+            if (grid.cells[i + 1].isWall) {
+                grid.cells[i].neighbouringWalls++
             }
         }
-    }
 
-    //console.log(`Cell ${cell} is neighboured by ${grid.cells[cell].neighbouringWalls} walls`)
+        //check below (if not on bottom edge)
+        if (!grid.cells[i].edges.includes("bottom")) {
+
+            //below-left
+            if (!grid.cells[i].edges.includes("left")) {
+                if (grid.cells[i + grid.dimension - 1].isWall) {
+                    grid.cells[i].neighbouringWalls++
+                }
+            }
+
+            //directly below
+            if (grid.cells[i + grid.dimension].isWall) {
+                grid.cells[i].neighbouringWalls++
+            }
+
+            //below-right
+            if (!grid.cells[i].edges.includes("right")) {
+                if (grid.cells[i + grid.dimension + 1].isWall) {
+                    grid.cells[i].neighbouringWalls++
+                }
+            }
+        }
+    })
 }
 
 grid.generateNextCells = function() {
-    grid.previousCells = grid.cells
-    this.cells = this.previousCells.map((_, index) => {
+    grid.wallCount = 0
+    grid.previousCells = JSON.parse(JSON.stringify(grid.cells))
+    grid.cells.forEach((_, index) => {
         let i = this.cells[index]
         if (i.neighbouringWalls >= 4 && i.neighbouringWalls <= 8) {
             i.isWall = true
+            grid.wallCount++
         } else {
             i.isWall = false
         }
         i.neighbouringWalls = 0
-        return i
-    }, grid)
+    })
 }
 
-const refreshRate = 80
-const generations = 5
-
+// EXECUTE
 const generateCavern = function() {
+    console.clear()
     grid.generateNoise()
-    grid.findEdges()
-    grid.renderWalls()
+    clearCanvas()
+    renderWalls()
     let timer = setInterval(() => {
-        grid.cells.forEach((_, j) => {
-            grid.findNeighbours(j)
-        })
         grid.generateNextCells()
-        grid.renderWalls()
+        console.log(grid.wallCount)
+        renderWalls()
     }, refreshRate)
     setTimeout(() => { clearInterval(timer) }, generations * refreshRate)
 }
 
-// EXECUTE
 setFloorColour()
 setWallColour()
 generateCavern()
 
 
 // TO DO
-// refactor Regenerate button so it don't refresh the page
 // ? refactor to include a checkIfWall function
