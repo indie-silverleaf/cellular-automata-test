@@ -1,8 +1,9 @@
 // RENDERING
 const refreshRate = 80
-const generations = 5
+const generations = 6
 
 const renderWalls = function(wallColour) {
+    clearCanvas()
     ctx.fillStyle = wallColour
     grid.cells.forEach((_, index) => {
         if (grid.cells[index].isWall) {
@@ -15,6 +16,8 @@ const renderWalls = function(wallColour) {
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('canvas'))
 const ctx = canvas.getContext('2d')
 
+let wallColour
+
 const clearCanvas = function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
@@ -24,13 +27,13 @@ const setFloorColour = function() {
 }
 
 const setWallColour = function() {
-    let colour = document.getElementById('wallColour').value
-    renderWalls(colour)
+    wallColour = document.getElementById('wallColour').value
+    renderWalls(wallColour)
 }
 
 // GRID
 const grid = {
-    dimension: 60,
+    dimension: 80,
     previousCells: [],
     cells: [],
     wallCount: 0
@@ -38,23 +41,32 @@ const grid = {
 
 grid.cellSize = (canvas.width / grid.dimension)
 
-grid.clearAllCells = function() {
+grid.clearCells = function() {
     grid.cells = []
+        //console.log(`grid.cells.length = ${grid.cells.length}`)
 }
 
-grid.generateNoise = function() {
-    grid.clearAllCells()
+grid.generateCells = function(withNoise) {
+    if (grid.cells.length) { grid.clearCells() }
     for (j = 0; j < grid.dimension; j++) {
         for (i = 0; i < grid.dimension; i++) {
-            grid.cells.push({
+            let newCell = {
                 x: (i * grid.cellSize),
                 y: (j * grid.cellSize),
-                isWall: Math.random() <= 0.4,
+                isWall: false,
                 edges: [],
                 neighbouringWalls: 0
-            })
+            }
+            if (withNoise) {
+                if (Math.random() <= 0.4) {
+                    newCell.isWall = true
+                    grid.wallCount++
+                }
+            }
+            grid.cells.push(newCell)
         }
     }
+    console.log(`grid.cells.length = ${grid.cells.length}`)
     grid.findEdges()
     grid.findNeighbours()
 }
@@ -79,6 +91,8 @@ grid.findEdges = function() {
 grid.findNeighbours = function() {
 
     grid.cells.forEach((_, i) => {
+
+        grid.cells[i].neighbouringWalls = 0
 
         // account for out-of-grid neighbours (i.e. implied walls beyond corners and edges)
         if (grid.cells[i].edges.length == 2) {
@@ -152,30 +166,33 @@ grid.findNeighbours = function() {
 }
 
 grid.generateNextCells = function() {
-    grid.wallCount = 0
-    grid.previousCells = JSON.parse(JSON.stringify(grid.cells))
     grid.cells.forEach((_, index) => {
-        let i = this.cells[index]
+        let i = grid.cells[index]
         if (i.neighbouringWalls >= 4 && i.neighbouringWalls <= 8) {
-            i.isWall = true
-            grid.wallCount++
+            if (!i.isWall) {
+                i.isWall = true
+                grid.wallCount++
+            }
         } else {
-            i.isWall = false
+            if (i.isWall) {
+                i.isWall = false
+                grid.wallCount--
+            }
         }
-        i.neighbouringWalls = 0
     })
+    grid.findNeighbours()
 }
 
 // EXECUTE
 const generateCavern = function() {
     console.clear()
-    grid.generateNoise()
+    grid.generateCells(1)
+
     clearCanvas()
-    renderWalls()
+    renderWalls(wallColour)
     let timer = setInterval(() => {
         grid.generateNextCells()
-        console.log(grid.wallCount)
-        renderWalls()
+        renderWalls(wallColour)
     }, refreshRate)
     setTimeout(() => { clearInterval(timer) }, generations * refreshRate)
 }
